@@ -1,0 +1,25 @@
+---
+semaphore_version: "2.19.12"
+semaphore_rpm_url: >-
+  https://github.com/semaphoreui/semaphore/releases/download/v{{ semaphore_version }}/semaphore_{{ semaphore_version }}_linux_amd64.rpm
+
+semaphore_user: semaphore
+semaphore_group: semaphore
+semaphore_home: /var/lib/semaphore
+semaphore_confdir: /etc/semaphore
+semaphore_config_file: "{{ semaphore_confdir }}/config.json"
+
+# Path to a ready-made config.json on the controller. When set, it is copied
+# verbatim instead of writing the minimal default configuration.
+semaphore_config_src: ""
+
+# Secrets Semaphore signs cookies and encrypts stored credentials with. Each is
+# 32 random bytes, base64-encoded: openssl rand -base64 32
+#
+# Set them from a vault to manage them yourself, for instance to share one set
+# across several nodes. Any one left undefined is generated on the first run
+# and then kept: later runs read it back out of the existing config.json.
+#
+# semaphore_cookie_hash: ""
+# semaphore_cookie_encryption: ""
+# semaphore_access_key_encryption: ""

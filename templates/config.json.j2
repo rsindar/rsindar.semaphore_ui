@@ -1,0 +1,10 @@
+{#- Each secret: the variable if set, else the one already in this file, else a new one. -#}
+{
+  "sqlite": {
+    "host": "./database.sqlite"
+  },
+  "dialect": "sqlite",
+  "cookie_hash": "{{ semaphore_cookie_hash | default(semaphore_current.cookie_hash) | default(lookup('ansible.builtin.password', '/dev/null', length=32) | b64encode) }}",
+  "cookie_encryption": "{{ semaphore_cookie_encryption | default(semaphore_current.cookie_encryption) | default(lookup('ansible.builtin.password', '/dev/null', length=32) | b64encode) }}",
+  "access_key_encryption": "{{ semaphore_access_key_encryption | default(semaphore_current.access_key_encryption) | default(lookup('ansible.builtin.password', '/dev/null', length=32) | b64encode) }}"
+}

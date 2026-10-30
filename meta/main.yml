@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  namespace: rsindar
+  role_name: semaphore_ui
+  author: Roman Sindarowski
+  description: Semaphore UI installation and service setup
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions:
+        - "9"
+        - "10"
+dependencies: []

@@ -1,0 +1,21 @@
+[Unit]
+Description=Semaphore UI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ semaphore_user }}
+Group={{ semaphore_group }}
+WorkingDirectory={{ semaphore_home }}
+ExecStart=/usr/bin/semaphore server --config {{ semaphore_config_file }}
+Restart=always
+RestartSec=10
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=semaphore
+
+[Install]
+WantedBy=multi-user.target

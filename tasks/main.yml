@@ -1,0 +1,87 @@
+---
+- name: Create the Semaphore group
+  ansible.builtin.group:
+    name: "{{ semaphore_group }}"
+    system: true
+
+- name: Create the Semaphore user
+  ansible.builtin.user:
+    name: "{{ semaphore_user }}"
+    group: "{{ semaphore_group }}"
+    home: "{{ semaphore_home }}"
+    shell: /sbin/nologin
+    system: true
+
+- name: Gather the installed RPM packages
+  ansible.builtin.package_facts:
+    manager: rpm
+
+- name: Install Semaphore UI
+  ansible.builtin.dnf:
+    name: "{{ semaphore_rpm_url }}"
+    state: present
+    disable_gpg_check: true
+    allow_downgrade: true
+  when: >-
+    'semaphore' not in ansible_facts.packages
+    or ansible_facts.packages['semaphore'][0].version != semaphore_version
+  notify: Restart Semaphore
+
+- name: Create the Semaphore configuration directory
+  ansible.builtin.file:
+    path: "{{ semaphore_confdir }}"
+    state: directory
+    owner: root
+    group: "{{ semaphore_group }}"
+    mode: "0750"
+
+# Keeps the generated secrets stable: they are read back out of the file that
+# already holds them, so a rerun does not invalidate sessions or stored keys.
+- name: Read the existing Semaphore configuration
+  ansible.builtin.slurp:
+    src: "{{ semaphore_config_file }}"
+  register: semaphore_config_raw
+  failed_when: false
+  changed_when: false
+  when: semaphore_config_src | length == 0
+  no_log: true
+
+- name: Write the Semaphore configuration
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ semaphore_config_file }}"
+    owner: root
+    group: "{{ semaphore_group }}"
+    mode: "0640"
+  vars:
+    semaphore_current: >-
+      {{ semaphore_config_raw.content | b64decode | from_json
+         if semaphore_config_raw.content is defined else {} }}
+  when: semaphore_config_src | length == 0
+  notify: Restart Semaphore
+
+- name: Install the supplied Semaphore configuration
+  ansible.builtin.copy:
+    src: "{{ semaphore_config_src }}"
+    dest: "{{ semaphore_config_file }}"
+    owner: root
+    group: "{{ semaphore_group }}"
+    mode: "0640"
+  when: semaphore_config_src | length > 0
+  notify: Restart Semaphore
+
+- name: Write the Semaphore systemd unit
+  ansible.builtin.template:
+    src: semaphore.service.j2
+    dest: /etc/systemd/system/semaphore.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Semaphore
+
+- name: Enable and start Semaphore
+  ansible.builtin.systemd:
+    name: semaphore.service
+    enabled: true
+    state: started
+    daemon_reload: true
